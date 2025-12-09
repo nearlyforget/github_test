@@ -1,0 +1,49 @@
+"""
+Copybara configuration for the github_test project.
+
+Run with:
+  /google/bin/releases/copybara/public/copybara/copybara google3/experimental/users/chadliu/github_test/copy.bara.sky postsubmit_piper_to_github --init-history
+"""
+
+load("//devtools/copybara/library/scrubbing", "message_extract_public_description")
+load("//devtools/copybara/library/workflow", "get_google3_default_excludes", "get_service_config", "piper_sot_to_github")
+
+google3_path = "experimental/users/chadliu/github_test"
+
+google3_excludes = get_google3_default_excludes(google3_path)
+
+# Files to be included in the push to GitHub
+google3_files = glob(
+    include = ["google3/" + google3_path + "/**"],
+    exclude = google3_excludes + [
+        # Exclude Google-only, internal files.
+        "google3/" + google3_path + "/internal/**",
+        "**/BUILD",
+    ],
+)
+
+transforms = [
+    core.move("google3/" + google3_path, ""),
+]
+
+allowed_authors = {
+    "chadliu": "Chad Liu <chadliu@google.com>",
+}
+
+# Push to GitHub
+piper_sot_to_github(
+    google3_files = google3_files,
+    # Use "build:No public description" if the CL description doesn't contain public tags.
+    # To include a description, use BEGIN_PUBLIC\nDescription\nEND_PUBLIC in your CL.
+    metadata_scrubber = message_extract_public_description(msg_if_no_match = "build:No public description\n"),
+    default_author = "Chad Liu <chadliu@google.com>",
+    allowed_authors = allowed_authors,
+    url = "https://github.com/nearlyforget/github_test",
+    branch = "main",
+    transformations = transforms,
+    # Uncomment and configure service_config for automated runs
+    # service_config = get_service_config(
+    #     owner_prod_group = "your-prod-group",
+    #     contact_email = "chadliu@google.com",
+    # ),
+)
